@@ -9,7 +9,7 @@ with open("keys.json") as data_file:
 
 t=Twitter(auth=OAuth(data["keys"]["token"], data["keys"]["token_key"], data["keys"]["con_secret"], data["keys"]["con_secret_key"])) 
 
-response = t.statuses.user_timeline(screen_name="ursonate")
+response = t.statuses.user_timeline(screen_name="adamriggs")
 therapist = eliza.eliza()
 atMentions = []
 hashTags = []
@@ -91,19 +91,19 @@ print("\n\n")
 #print(tagged)
 #print("\n\n")
 #print(therapist.respond(createElizaInput(tagged)))
-response = therapist.respond(newPost)
-responseLen = len(response)
-if responseLen < 140:
+message = therapist.respond(newPost)
+messageLen = len(message)
+if messageLen < 140:
     for h in hashTags:
-        if responseLen + 1 + len(h) < 140:
-            response += " " + h
-            responseLen = len(response)
+        if messageLen + 1 + len(h) < 140:
+            message += " " + h
+            messageLen = len(message)
     for a in atMentions:
-        if responseLen + 1 + len(a) < 140:
-            response += " " + a
-            responseLen = len(response)
-print(response)
+        if messageLen + 1 + len(a) < 140:
+            message += " " + a
+            messageLen = len(message)
+print(message)
 print("\n\n")
 
-#t.statuses.update(status=therapist.respond(post), in_reply_to_status_id=response[0]['id'])
+t.statuses.update(status=message, in_reply_to_status_id=response[0]['id'])
 
