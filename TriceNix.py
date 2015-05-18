@@ -9,7 +9,8 @@ with open("keys.json") as data_file:
 
 t=Twitter(auth=OAuth(data["keys"]["token"], data["keys"]["token_key"], data["keys"]["con_secret"], data["keys"]["con_secret_key"])) 
 
-response = t.statuses.user_timeline(screen_name="adamriggs")
+screenName = "adamriggs"
+response = t.statuses.user_timeline(screen_name=screenName)
 therapist = eliza.eliza()
 atMentions = []
 hashTags = []
@@ -92,6 +93,7 @@ print("\n\n")
 #print("\n\n")
 #print(therapist.respond(createElizaInput(tagged)))
 message = therapist.respond(newPost)
+message = "@" + screenName + " " + message
 messageLen = len(message)
 if messageLen < 140:
     for h in hashTags:
