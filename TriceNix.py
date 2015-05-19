@@ -42,7 +42,8 @@ def removeNonWords(message):
                 newMessage += prevW + " "
             newMessage += w + " "
         elif w[:1] == "@":
-            atMentions.append(w)
+            if(w.lower() != "@tricenix"):
+                atMentions.append(w)
         elif w[:1] == "#":
             hashTags.append(w)
         elif w[:4] == "http":
