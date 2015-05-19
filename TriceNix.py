@@ -16,6 +16,10 @@ atMentions = []
 hashTags = []
 urls = []
 
+mentions = t.statuses.mentions_timeline()
+print(mentions[0]['text'])
+print(mentions[0]['id'])
+
 def removeNonWords(message):
     #words = message.lower()
     words = message.split()
@@ -107,5 +111,5 @@ if messageLen < 140:
 print(message)
 print("\n\n")
 
-t.statuses.update(status=message, in_reply_to_status_id=response[0]['id'])
+#t.statuses.update(status=message, in_reply_to_status_id=response[0]['id'])
 
