@@ -157,9 +157,9 @@ if checkDBForID(response[0]['id'])==False:
                 messageLen = len(message)
     print(message)
     print("\n\n")
+    twitter.statuses.update(status=message, in_reply_to_status_id=response[0]['id'])
     insertIDIntoDB(response[0]['id'], screenNames[0], message)
 
 closeDB()
 
-#t.statuses.update(status=message, in_reply_to_status_id=response[0]['id'])
 
