@@ -1,37 +1,74 @@
+
+
+#-----------------
+# imports
+#-----------------
+
 from twitter import *
+import MySQLdb
 import json
 import eliza
 import nltk, re, pprint
 from nltk import *
 
+#-----------------
+# main variables
+#-----------------
+
 with open("keys.json") as data_file:
     data = json.load(data_file)
 
-t=Twitter(auth=OAuth(data["keys"]["token"], data["keys"]["token_key"], data["keys"]["con_secret"], data["keys"]["con_secret_key"])) 
+twitter = Twitter(auth=OAuth(data["keys"]["token"], data["keys"]["token_key"], data["keys"]["con_secret"], data["keys"]["con_secret_key"])) 
+database = MySQLdb.connect(host=data["database"]["host"],  user=data["database"]["user"], passwd=data["database"]["passwd"], db=data["database"]["db"])
+cursor = database.cursor()
+database.close()
 
-screenName = "adamriggs"
-response = t.statuses.user_timeline(screen_name=screenName)
+screenNames = ["adamriggs"]
 therapist = eliza.eliza()
 atMentions = []
 hashTags = []
 urls = []
 
-mentions = t.statuses.mentions_timeline()
-print(mentions[0]['text'])
-print(mentions[0]['id'])
+response = twitter.statuses.user_timeline(screen_name=screenNames[0])
+mentions = twitter.statuses.mentions_timeline()
+
+#-----------------
+# functions
+#-----------------
+
+def connectDB():
+    global database
+    global cursor
+    database = MySQLdb.connect(host=data["database"]["host"],  user=data["database"]["user"], passwd=data["database"]["passwd"], db=data["database"]["db"])
+    cursor=db.cursor()
+
+def closeDB():
+    global database
+    database.close()
+    
+def checkDBForID(id):
+    global database
+    global cursor
+    
+    connectDB()
+    closeDB()
+    
+def insertIDIntoDB(id):
+    global database
+    global cursor
+    
+    connectDB()
+    closeDB()
 
 def removeNonWords(message):
-    #words = message.lower()
     words = message.split()
     prevW = ""
-    #print(words)
     newMessage = ""
     
     if(words[0][:1]=="."):
         words[0]=words[0][1:]
         
     for w in words:
-        #print(w[:4].lower() == "http")
         if (w[:1] != "@") and (w[:1] != "#") and (w[:4].lower() != "http"):
             #print(w)
             if prevW[:1] == "@":
@@ -49,9 +86,6 @@ def removeNonWords(message):
         elif w[:4] == "http":
             urls.append(w)
         prevW = w
-    #print(atMentions)
-    #print(hashTags)
-    #print(urls)
     return newMessage
 
 def createElizaInput(taggedArray):
@@ -79,7 +113,6 @@ def createElizaInput(taggedArray):
 
 # massage tweet data
 post = response[0]['text']
-#post = "This week I'll be hiding Luis Tiant bobbleheads in Boston - each bobblehead = 2 @RedSox tix to Luis Tiant Bobblehead Night on Thur at Fenway"
 #print(post)
 newPost = removeNonWords(post)
 tokens = word_tokenize(post)
@@ -90,6 +123,7 @@ tagged = nltk.pos_tag(words)
 
 
 # output massaged data
+#print(response[0])
 print("\n\n")
 print(response[0]['id'])
 print(newPost)
