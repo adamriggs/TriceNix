@@ -40,25 +40,31 @@ def connectDB():
     global database
     global cursor
     database = MySQLdb.connect(host=data["database"]["host"],  user=data["database"]["user"], passwd=data["database"]["passwd"], db=data["database"]["db"])
-    cursor=db.cursor()
+    cursor=database.cursor()
 
 def closeDB():
     global database
     database.close()
     
 def checkDBForID(id):
+    global cursor
+    cursor.execute("SELECT COUNT(1) FROM tricenix WHERE reply_to_id = \'" + str(id) + "\'")
+    msgExists=cursor.fetchone()
+    if msgExists[0]:
+        return True
+    else:
+        return False
+    
+def insertIDIntoDB(id, name, message):
     global database
     global cursor
+    message = message.replace('"', r'\"')
+    message = message.replace("'", r"\'")
+    sql = "INSERT INTO tricenix (reply_to_id,screen_name,message) VALUES (\'" + str(id) + "\', \'" + str(name) + "\', \'" + str(message) + "\')"
+    print(sql)
+    print(cursor.execute(sql))
+    database.commit()
     
-    connectDB()
-    closeDB()
-    
-def insertIDIntoDB(id):
-    global database
-    global cursor
-    
-    connectDB()
-    closeDB()
 
 def removeNonWords(message):
     words = message.split()
@@ -121,30 +127,39 @@ words = [w.lower() for w in tokens]
 tagged = nltk.pos_tag(words)
 
 
+#-----------------
+# main loop
+#-----------------
 
+connectDB()
 # output massaged data
 #print(response[0])
 print("\n\n")
 print(response[0]['id'])
-print(newPost)
-print("\n\n")
-#print(tagged)
-#print("\n\n")
-#print(therapist.respond(createElizaInput(tagged)))
-message = therapist.respond(newPost)
-message = "@" + screenName + " " + message
-messageLen = len(message)
-if messageLen < 140:
-    for h in hashTags:
-        if messageLen + 1 + len(h) < 140:
-            message += " " + h
-            messageLen = len(message)
-    for a in atMentions:
-        if messageLen + 1 + len(a) < 140:
-            message += " " + a
-            messageLen = len(message)
-print(message)
-print("\n\n")
+if checkDBForID(response[0]['id'])==False:
+    print(cursor.execute("select * from tricenix"))
+    print(newPost)
+    print("\n\n")
+    #print(tagged)
+    #print("\n\n")
+    #print(therapist.respond(createElizaInput(tagged)))
+    message = therapist.respond(newPost)
+    message = "@" + screenNames[0] + " " + message
+    messageLen = len(message)
+    if messageLen < 140:
+        for h in hashTags:
+            if messageLen + 1 + len(h) < 140:
+                message += " " + h
+                messageLen = len(message)
+        for a in atMentions:
+            if messageLen + 1 + len(a) < 140:
+                message += " " + a
+                messageLen = len(message)
+    print(message)
+    print("\n\n")
+    insertIDIntoDB(response[0]['id'], screenNames[0], message)
+
+closeDB()
 
 #t.statuses.update(status=message, in_reply_to_status_id=response[0]['id'])
 
