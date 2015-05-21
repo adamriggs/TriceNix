@@ -61,8 +61,6 @@ def insertIDIntoDB(id, name, message):
     message = message.replace('"', r'\"')
     message = message.replace("'", r"\'")
     sql = "INSERT INTO tricenix (reply_to_id,screen_name,message) VALUES (\'" + str(id) + "\', \'" + str(name) + "\', \'" + str(message) + "\')"
-    print(sql)
-    print(cursor.execute(sql))
     database.commit()
     
 
@@ -132,8 +130,6 @@ tagged = nltk.pos_tag(words)
 #-----------------
 
 connectDB()
-# output massaged data
-#print(response[0])
 print("\n\n")
 print(response[0]['id'])
 if checkDBForID(response[0]['id'])==False:
