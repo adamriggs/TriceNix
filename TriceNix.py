@@ -25,9 +25,9 @@ database.close()
 
 screenNames = ["adamriggs"]
 therapist = eliza.eliza()
-atMentions = []
-hashTags = []
-urls = []
+#atMentions = []
+#hashTags = []
+#urls = []
 
 tweets = twitter.statuses.user_timeline(screen_name=screenNames[0])
 tweetsLen = len(tweets)
@@ -67,21 +67,25 @@ def checkDBForID(id):
     else:
         return False
     
-def insertIDIntoDB(id, name, message, reply):
+def insertIDIntoDB(msg):
     global database
     global cursor
     reply = reply.replace('"', r'\"')
     reply = reply.replace("'", r"\'")
-    sql = "INSERT INTO tricenix (reply_to_id, screen_name, message, response) VALUES (\'" + str(id) + "\', \'" + str(name) + "\', \'" + str(message)  + "\', \'" + str(response)+ "\')"
+    sql = "INSERT INTO tricenix (reply_to_id, screen_name, message, response) VALUES (\'" + str(msg['id']) + "\', \'" + str(msg['screen_name']) + "\', \'" + str(msg['message'])  + "\', \'" + str(msg['response'])+ "\')"
     #print(sql)
     cursor.execute(sql)
     database.commit()
     
 
-def removeNonWords(response):
-    words = response.split()
+def removeNonWords(msg):
+    newMsg = msg
+    words = msg['message'].split()
     prevW = ""
-    newresponse = ""
+    newText = ""
+    atMentions = []
+    hashTags = []
+    urls = []
     
     if(words[0][:1]=="."):
         words[0]=words[0][1:]
@@ -91,11 +95,11 @@ def removeNonWords(response):
             #print(w)
             if prevW[:1] == "@":
                 #print(prevW)
-                newresponse += prevW + " "
+                newText += prevW + " "
             if prevW[:1] == "#":
                 #print(prevW)
-                newresponse += prevW + " "
-            newresponse += w + " "
+                newText += prevW + " "
+            newText += w + " "
         elif w[:1] == "@":
             if(w.lower() != "@tricenix"):
                 atMentions.append(w)
@@ -104,7 +108,13 @@ def removeNonWords(response):
         elif w[:4] == "http":
             urls.append(w)
         prevW = w
-    return newresponse
+    
+    newMsg['newMessage'] = newText
+    newMsg['atMentions'] = atMentions
+    newMsg['hashTags'] = hashTags
+    newMsg['urls'] = urls
+    
+    return newMsg
 
 def createElizaInput(taggedArray):
     #print(taggedArray)
@@ -130,13 +140,13 @@ def createElizaInput(taggedArray):
 
 
 # massage tweet data
-post = tweets[0]['text']
+#post = tweets[0]['text']
 #print(post)
-newPost = removeNonWords(post)
-tokens = word_tokenize(post)
+#newPost = removeNonWords(post)
+#tokens = word_tokenize(post)
 #tokens_punct = wordpunct_tokenize(post)
-words = [w.lower() for w in tokens]
-tagged = nltk.pos_tag(words)
+#words = [w.lower() for w in tokens]
+#tagged = nltk.pos_tag(words)
 
 
 #-----------------
@@ -147,32 +157,47 @@ print(allMessages)
 connectDB()
 print("\n\n")
 print(tweets[0]['id'])
-for msg in messages:
-    removeNonWords(msg)
+for msg in allMessages:
+    if checkDBForID(msg['id'])==False:
+        msg = removeNonWords(msg)
+        msg['response'] = therapist.respond(msg['newMessage'])
+        msg['response'] = "@" + msg['screen_name'] + " " + msg['response']
+        responseLen = len(msg['response'])
+        if responseLen < 140:
+            for h in msg['hashTags']:
+                if responseLen + 1 + len(h) < 140:
+                    msg['response'] += " " + h
+                    responseLen = len(msg['response'])
+            for a in msg['atMentions']:
+                if responseLen + 1 + len(a) < 140:
+                    msg['response'] += " " + a
+                    responseLen = len(msg['response'])
+        #twitter.statuses.update(status=msg['response'], in_reply_to_status_id=msg['id'])
+        #insertIDIntoDB(msg)
     
-if checkDBForID(tweets[0]['id'])==False:
-    #print(cursor.execute("select * from tricenix"))
-    print(newPost)
-    print("\n\n")
-    #print(tagged)
-    #print("\n\n")
-    #print(therapist.respond(createElizaInput(tagged)))
-    response = therapist.respond(newPost)
-    response = "@" + screenNames[0] + " " + response
-    responseLen = len(response)
-    if responseLen < 140:
-        for h in hashTags:
-            if responseLen + 1 + len(h) < 140:
-                response += " " + h
-                responseLen = len(response)
-        for a in atMentions:
-            if responseLen + 1 + len(a) < 140:
-                response += " " + a
-                responseLen = len(response)
-    print(response)
-    print("\n\n")
+# if checkDBForID(tweets[0]['id'])==False:
+#     #print(cursor.execute("select * from tricenix"))
+#     print(newPost)
+#     print("\n\n")
+#     #print(tagged)
+#     #print("\n\n")
+#     #print(therapist.respond(createElizaInput(tagged)))
+#     response = therapist.respond(newPost)
+#     response = "@" + screenNames[0] + " " + response
+#     responseLen = len(response)
+#     if responseLen < 140:
+#         for h in hashTags:
+#             if responseLen + 1 + len(h) < 140:
+#                 response += " " + h
+#                 responseLen = len(response)
+#         for a in atMentions:
+#             if responseLen + 1 + len(a) < 140:
+#                 response += " " + a
+#                 responseLen = len(response)
+#     print(response)
+#     print("\n\n")
     #twitter.statuses.update(status=response, in_reply_to_status_id=tweets[0]['id'])
-    insertIDIntoDB(tweets[0]['id'], screenNames[0], post, response)
+    #insertIDIntoDB(tweets[0]['id'], screenNames[0], post, response)
 
 closeDB()
 
