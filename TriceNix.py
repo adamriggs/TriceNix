@@ -35,8 +35,8 @@ mentions = twitter.statuses.mentions_timeline()
 mentionsLen = len(mentions)
 allMessages = []
 allMessagesLen = tweetsLen + mentionsLen
-print("tweetsLen == " + str(tweetsLen))
-print("mentionsLen == " + str(mentionsLen))
+#print("tweetsLen == " + str(tweetsLen))
+#print("mentionsLen == " + str(mentionsLen))
 
 #-----------------
 # functions
@@ -70,9 +70,16 @@ def checkDBForID(id):
 def insertIDIntoDB(msg):
     global database
     global cursor
-    reply = reply.replace('"', r'\"')
-    reply = reply.replace("'", r"\'")
-    sql = "INSERT INTO tricenix (reply_to_id, screen_name, message, response) VALUES (\'" + str(msg['id']) + "\', \'" + str(msg['screen_name']) + "\', \'" + str(msg['message'])  + "\', \'" + str(msg['response'])+ "\')"
+    msg['response'] = msg['response'].replace('"', r'\"')
+    msg['response'] = msg['response'].replace("'", r"\'")
+    msg['message'] = msg['message'].replace('"', r'\"')
+    msg['message'] = msg['message'].replace("'", r"\'")
+    msg['newMessage'] = msg['newMessage'].replace('"', r'\"')
+    msg['newMessage'] = msg['newMessage'].replace("'", r"\'")
+    msg['atMentions']= ','.join(map(str, msg['atMentions']))
+    msg['hashTags']= ','.join(map(str, msg['hashTags']))
+    msg['urls']= ','.join(map(str, msg['urls']))
+    sql = "INSERT INTO tricenix (reply_to_id, screen_name, message, response, at_mentions, hash_tags, urls) VALUES (\'" + str(msg['id']) + "\', \'" + str(msg['screen_name']) + "\', \'" + str(msg['message'])  + "\', \'" + str(msg['response'])+ "\', \'" + str(msg['atMentions']) + "\', \'" + str(msg['hashTags']) + "\', \'" + str(msg['urls']) + "\')"
     #print(sql)
     cursor.execute(sql)
     database.commit()
@@ -125,7 +132,7 @@ def createElizaInput(taggedArray):
     for tag in taggedArray:
         
         if(tag[1][:2] == ("NN" or "PR" or "IN")):
-            print('*****noun found')
+            #print('*****noun found')
             noun_found = True
             noun = tag[0]
             print(tag[0])
@@ -134,7 +141,7 @@ def createElizaInput(taggedArray):
             print(tag[0])
             output = noun + " " + tag[0]
             verb_found = True
-    print("\n"+output+"\n")
+    #print("\n"+output+"\n")
     return output
 
 
@@ -153,7 +160,7 @@ def createElizaInput(taggedArray):
 # main loop
 #-----------------
 consolidateMessages()
-print(allMessages)
+#print(allMessages)
 connectDB()
 print("\n\n")
 print(tweets[0]['id'])
@@ -173,7 +180,7 @@ for msg in allMessages:
                     msg['response'] += " " + a
                     responseLen = len(msg['response'])
         #twitter.statuses.update(status=msg['response'], in_reply_to_status_id=msg['id'])
-        #insertIDIntoDB(msg)
+        insertIDIntoDB(msg)
     
 # if checkDBForID(tweets[0]['id'])==False:
 #     #print(cursor.execute("select * from tricenix"))
