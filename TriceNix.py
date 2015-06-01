@@ -162,8 +162,8 @@ def createElizaInput(taggedArray):
 consolidateMessages()
 #print(allMessages)
 connectDB()
-print("\n\n")
-print(tweets[0]['id'])
+#print("\n\n")
+#print(tweets[0]['id'])
 for msg in allMessages:
     if checkDBForID(msg['id'])==False:
         msg = removeNonWords(msg)
